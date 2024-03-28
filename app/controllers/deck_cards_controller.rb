@@ -1,67 +1,65 @@
 class DeckCardsController < ApplicationController
-    before_action :set_deck_cards, only:[:show, :update, :destroy]
-    before_action :set_deck, only:[:show, :update, :destroy]
+    before_action :set_deck, only:[:index, :show, :update, :destroy]
+    before_action :set_deck_card, only:[:index, :show, :update, :destroy]
 
     def index 
-        if deck_cards = @deck.deck_cards
-            render json: deck_cards.includes(:card), status: :ok
+        deck_cards = @deck.deck_cards.includes(:card)
+        if deck_cards != []
+            render json: deck_cards, include: :card, status: :ok
         else 
-            render json: { message: 'Cards not found in deck.'}, status: :not_found
+            render json: { message: 'Deck cards not found.'}, status: :not_found
         end
     end
 
     def show
-        if @deck_cards
-            render json: @deck_cards.includes(:card), status: :ok
+        if @deck_card
+            render json: @deck_card, include: :card, status: :ok
         else
-            render json:{message: 'Card not found in deck.'}, status: :not_found
+            render json:{message: 'Deck card entry not found.'}, status: :not_found
         end
     end
 
     def create
-        deck_cards = @deck.deck_cards.new(deck_cards_params)
-        if deck_cards.save
-            render json: deck_cards.includes(:card), notice: "Card added to deck."
+        deck_card = DeckCard.new(deck_card_params)
+        if deck_card.save
+            render json: deck_card, include: :card, notice: "Card added to deck card."
         else 
-            render json: deck_cards.errors, status: :unprocessable_entity
+            render json: deck_card.errors, status: :unprocessable_entity
         end
     end
 
     def update
-        card = Card.find(params[:card_id])
-        if @deck.deck_cards.update(card)
-            render json: @deck.deck_cards, notice: "deck_cards updated."
-        else 
-            render json: deck.deck_cards.errors, status: :unprocessable_entity
+        if @deck_card.update(deck_card_params)
+            render json: @deck_card, include: :card, notice: "deck_card updated."
+        else
+            render json: @deck_card.errors, status: :unprocessable_entity
         end
     end
 
     def destroy
-        if @deck_cards.destroy
-            head :no_content, notice: "Card removed from deck_cards."
+        if @deck_card.destroy
+            render json: { message: "deck_card deleted." }, head: :no_content, notice: "Card removed from deck_card."
         else
-            render json: @deck_cards.errors, status: :unprocessable_entity
+            render json: @deck_card.errors, status: :unprocessable_entity
         end
     end
 
     private
 
-    def deck_cards_params
-        params.require(:deck_cards).permit(params[:deck_id, :card_id, :quantity])
+    def deck_card_params
+        params.require(:deck_card).permit(:deck_id, :card_id, :quantity)
     end
 
     def set_deck
         @deck = Deck.find(params[:deck_id])
-        if @deck != current_user
-            render json: { message: 'Unauthorized access.'}, status: :unauthorized
-        end
         rescue ActiveRecord::RecordNotFound
-            render json: { message: 'Deck not found.' }, status: :not_found
+            render json: { message: 'deck not found.' }, status: :not_found
     end
 
-    def set_deck_cards
-        @deck_cards = @deck.deck_cards.find_by(id: params[:id])
+    def set_deck_card
+        @deck_card = @deck.deck_cards.find_by(id: params[:id])
     rescue ActiveRecord::RecordNotFound
-        render json: { message: 'Card not found in deck.' }, status: :not_found
+        render json: { message: 'Deck card entry not found.' }, status: :not_found
     end
+    
 end

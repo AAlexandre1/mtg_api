@@ -1,14 +1,13 @@
 class PlayersController < ApplicationController
     before_action :set_player, only:[:show, :update, :destroy]
-    nested do
-        resources :libraries, only: [:index, :show, :create, :destroy]
-        resources :wishlists, only: [:index, :show, :create, :destroy]
-        resources :decks, only: [:index, :show, :create, :destroy]
-    end
 
     def index
         players = Player.all
-        render json: players
+        if players != []
+            render json: players, status: :ok
+        else
+            render json: { message: 'Players not found.' }, status: :not_found
+        end
     end
 
     def show
@@ -44,10 +43,17 @@ class PlayersController < ApplicationController
         end
     end
 
-    def libraries
-        @player = Player.find(params[:id])
-        @libraries = @player.libraries.includes(:card)
-    end
+    # def libraries
+    #     @libraries = @player.libraries.includes(:card)
+    # end
+
+    # def wishlists
+    #     @wishlists = @player.wishlists.includes(:card)
+    # end
+
+    # def decks
+    #     @decks = @player.decks.includes(:card)
+    # end
 
 
     private

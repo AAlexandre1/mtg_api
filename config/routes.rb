@@ -8,15 +8,15 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   # root "posts#index"
   resources :players do
-    resources :libraries, only: [:index, :show, :create, :destroy]
-    resources :wishlists, only: [:index, :show, :create, :destroy]
+    resources :libraries
+    resources :wishlists
     resources :decks do
-      resources :deck_cards, only: [:index, :show, :create, :destroy]
+      resources :deck_cards
     end
   end
 
   resources :cards do
-    resources :mana_cost
+    resources :mana_costs
   end
   
   resources :manas
