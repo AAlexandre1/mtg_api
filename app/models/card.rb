@@ -1,5 +1,6 @@
 class Card < ApplicationRecord
     has_many :types, through: :card_types
+    has_many :keywords, through: :card_keywords
     has_many :libraries
     has_many :wishlists
     has_many :deck_cards
