@@ -5,8 +5,8 @@ class CardsController < ApplicationController
         cards = Card.all
         if cards != []
         # render json: CardBlueprinter.render(cards, view: :normal)
-            render json: cards, status: :ok
-        else
+        render json: cards, include: [:mana_costs, :types], :except => [:created_at, :updated_at], status: :ok
+    else
             render json:{message: 'Cards not found.'}, status: :not_found
         end
     end
@@ -14,8 +14,7 @@ class CardsController < ApplicationController
     def show
         if @card 
             # render json: CardBlueprinter.render(@card, view: :extended), status: :ok
-            render json: @card, status: :ok
-            # .inludes(mana_costs)
+            render json: cards, include: [:mana_costs, :card_types], :except => [:created_at, :updated_at], status: :ok
         else
             render json:{message: 'Card not found.'}, status: :not_found
         end
@@ -23,17 +22,23 @@ class CardsController < ApplicationController
 
     def create
         card = Card.new(card_params)
-        if card.save
-            params[:mana_costs].each do |mana_cost|
-            mana_cost = card.mana_costs.new(mana_cost)
-            if mana_cost.save
-                render json: mana_cost.errors, status: :unprocessable_entity
-                break
+        if card.save!
+            card_id = card.id
+            card_type = card.card_types.new(card_type_params.merge(card_id: card_id))
+            if card_type.save
+        #     params[:mana_costs].each do |mana_cost|
+        #     mana_cost = card.mana_costs.new(mana_cost)
+        #     if mana_cost.save
+        #         render json: mana_cost.errors, status: :unprocessable_entity
+        #         break
+        #     end
+        # end
+        #     render json: card, include: :mana_costs, status: :ok
+        # else
+                render json: card, include: [:card_types], :except => [:created_at, :updated_at], status: :ok
+            else
+                render json: card.errors, status: :unprocessable_entity
             end
-        end
-            render json: card, include: :mana_costs, status: :ok
-        else
-            render json: card.errors, status: :unprocessable_entity
         end
     end
                 # render json: CardBlueprinter.render(card, view: :extended), status: :created
@@ -41,16 +46,17 @@ class CardsController < ApplicationController
 
     def update
         if @card.update(card_params)
-            if params[:mana_cost]
-                mana_cost = @card.mana_costs.find_or_create_by(mana_cost_params)
-                if @mana_cost.update(mana_cost_params)
-                    render json: @card, include: :mana_costs, status: :ok
-                else
-                    render json: @mana_costs.errors, status: :unprocessable_entity
-                end
-            else
-                render json: @card, include: :mana_costs, status: :ok
-            end
+            # if params[:mana_cost]
+            #     mana_cost = @card.mana_costs.find_or_create_by(mana_cost_params)
+            #     if @mana_cost.update(mana_cost_params)
+            #         render json: @card, include: :mana_costs, status: :ok
+            #     else
+            #         render json: @mana_costs.errors, status: :unprocessable_entity
+            #     end
+            # else
+            #     render json: @card, include: :mana_costs, status: :ok
+            # end
+            render json: cards, include: [:mana_costs, :type_ids, :keyword_ids], :except => [:created_at, :updated_at], status: :ok
         else
             render json: @card.errors, status: :unprocessable_entity
         end
@@ -98,7 +104,12 @@ class CardsController < ApplicationController
     private
 
     def card_params
-        params.require(:card).permit(:name, :set, :power, :toughness, :description, :type_ids => [], :mana_costs => [], **:mana_cost)
+        params.require(:card).permit(:name, :set, :power, :toughness, :description, **:card_type_id => {})
+        # , :type_cards => [],  :mana_costs => []
+    end
+
+    def card_type_params
+        params.require(:type).permit(:type_id)
     end
 
     def mana_cost_params

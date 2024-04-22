@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   
   resources :manas
   resources :types
+  resources :keywords
   
   post '/players/:player_id/decks/:deck_id/add_card', to: 'decks#add_card'
 
